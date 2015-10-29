@@ -15,6 +15,18 @@ public:
 	explicit MainWindow(QWidget *parent = 0);
 	~MainWindow();
 
+private slots:
+	void on_mergeBrowse_clicked();
+
+
+	void on_mergeAddFile_clicked();
+
+	void on_mergeDeleteFile_clicked();
+
+	void on_mergeMoveUp_clicked();
+
+	void on_mergeMoveDown_clicked();
+
 private:
 	Ui::MainWindow *ui;
 };
