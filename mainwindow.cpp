@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <QfileDialog>
+#include <QFileDialog>
 #include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -48,4 +48,14 @@ void MainWindow::on_mergeMoveDown_clicked(){
 		QListWidgetItem* prevItem=ui->mergeFileListWidget->takeItem(curRow+1);
 		ui->mergeFileListWidget->insertItem(curRow,prevItem);
 	}
+}
+
+void MainWindow::on_splitBrowseFile_clicked(){
+	QString fileName=QFileDialog::getOpenFileName(this,tr("Open File"),QDir::homePath(),tr("PDF Files (*.pdf)"));
+	ui->splitFileEdit->setText(fileName);
+}
+
+void MainWindow::on_splitBrowseDir_clicked(){
+	QString targetDir=QFileDialog::getExistingDirectory(this,tr("Open Directory"),QDir::homePath(),QFileDialog::ShowDirsOnly);
+	ui->splitDirEdit->setText(targetDir);
 }

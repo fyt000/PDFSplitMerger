@@ -27,6 +27,10 @@ private slots:
 
 	void on_mergeMoveDown_clicked();
 
+	void on_splitBrowseFile_clicked();
+
+	void on_splitBrowseDir_clicked();
+
 private:
 	Ui::MainWindow *ui;
 };
