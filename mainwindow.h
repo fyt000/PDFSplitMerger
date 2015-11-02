@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <pdfcore.h>
 
 namespace Ui {
 class MainWindow;
@@ -31,8 +32,14 @@ private slots:
 
 	void on_splitBrowseDir_clicked();
 
+	void on_mergePush_clicked();
+
+	void on_splitPush_clicked();
+
 private:
 	Ui::MainWindow *ui;
+	PDFCore p;
+	void warningMsgBox(QString);
 };
 
 #endif // MAINWINDOW_H

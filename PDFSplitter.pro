@@ -14,9 +14,15 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    pdfcore.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    pdfcore.h
 
 FORMS    += mainwindow.ui
 
+unix:!macx: LIBS += -L$$PWD/../../../../../usr/local/lib/ -lpodofo
+
+INCLUDEPATH += $$PWD/../../../../../usr/local/include
+DEPENDPATH += $$PWD/../../../../../usr/local/include
