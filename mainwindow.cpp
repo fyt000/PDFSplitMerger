@@ -96,10 +96,7 @@ void MainWindow::on_mergePush_clicked()
 	int status=p.merge(fileNames,finalPath.toStdString());
 	std::cout<<status<<std::endl;
 	if (status){
-		QMessageBox msgBox;
-		msgBox.setText(QString::fromStdString(p.getErrorMsg()));
-		msgBox.setIcon(QMessageBox::Warning);
-		msgBox.exec();
+		warningMsgBox(tr(p.getErrorMsg().c_str()));
 	}
 }
 
@@ -121,12 +118,9 @@ void MainWindow::on_splitPush_clicked(){
 
 	QFileInfo fileInfo(srcFile);
 	std::string baseFileName(fileInfo.baseName().toStdString());
-	int status=p.split(srcFileStr.toStdString(),destPathStr.toStdString(),baseFileName);
+	int status=p.split(srcFileStr.toStdString(),destPathStr.toStdString(),baseFileName,ui->splitHalfCheckBox->isChecked());
 	std::cout<<status<<std::endl;
 	if (status){
-		QMessageBox msgBox;
-		msgBox.setText(QString::fromStdString(p.getErrorMsg()));
-		msgBox.setIcon(QMessageBox::Warning);
-		msgBox.exec();
+		warningMsgBox(tr(p.getErrorMsg().c_str()));
 	}
 }

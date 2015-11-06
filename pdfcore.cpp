@@ -28,21 +28,53 @@ int PDFCore::merge(std::vector<std::string> &files, std::string dest){
 }
 
 
-int PDFCore::split(std::string srcPath,std::string destDir,std::string baseFileName){
+//copies all the resources, this needs to be fixed
+int PDFCore::split(std::string srcPath,std::string destDir,std::string baseFileName,bool split){
 	try{
 		PdfMemDocument srcFile(srcPath.c_str());
 		int count=srcFile.GetPageCount();
+
+		//
+		//PdfParser parser(&vecObj,srcPath.c_str());
+
 		std::cout<<srcPath<<std::endl;
 		std::cout<<destDir<<std::endl;
 		std::cout<<baseFileName<<std::endl;
 		std::cout<<count<<std::endl;
 		for (int i=0;i<count;i++){
-			PdfMemDocument newFile;
-			newFile.InsertExistingPageAt(srcFile,i,0);
-			//TODO: might need to check if file exists already
-			std::string fullDest=destDir+'/'+baseFileName+"_"+intZeroPadding(i+1,count)+".pdf";
+			std::string fullDest=destDir+'/'+baseFileName+"_"+intZeroPadding(i+1,count);
 			std::cout<<fullDest<<std::endl;
-			newFile.Write(fullDest.c_str());
+
+			if (split){
+				//if cut in half, set the media box to half
+				PdfRect rectLeft=srcFile.GetPage(i)->GetMediaBox();
+				rectLeft.SetWidth(rectLeft.GetWidth()/2);
+				PdfRect rectRight=srcFile.GetPage(i)->GetMediaBox();
+				rectRight.SetWidth(rectRight.GetWidth()/2);
+				rectRight.SetLeft(rectRight.GetWidth());
+				PdfObject rLeft;
+				rectLeft.ToVariant(rLeft);
+				PdfObject rRight;
+				rectRight.ToVariant(rRight);
+				PdfMemDocument fileA;
+				fileA.InsertPages(srcFile,i,1);
+				PdfPage *pageA=fileA.GetPage(0);
+				pageA->GetObject()->GetDictionary().AddKey(PdfName("MediaBox"),rLeft);
+				fileA.Write(std::string(fullDest+"_A.pdf").c_str());
+				PdfMemDocument fileB;
+				fileB.InsertPages(srcFile,i,1);
+				PdfPage *pageB=fileB.GetPage(0);
+				pageB->GetObject()->GetDictionary().AddKey(PdfName("MediaBox"),rRight);
+				fileB.Write(std::string(fullDest+"_B.pdf").c_str());
+			}
+			else{
+				PdfMemDocument newFile;
+				newFile.InsertPages(srcFile,i,1);
+				fullDest+=".pdf";
+				newFile.Write(fullDest.c_str());
+			}
+
+
 		}
 		return 0;
 	}
