@@ -9,6 +9,4 @@ if [ "${dirname%$tmp}" != "/" ]; then
 fi
 LD_LIBRARY_PATH=$dirname
 export LD_LIBRARY_PATH
-DISPLAY=:0
-export DISPLAY
 $dirname/$appname "$@"
