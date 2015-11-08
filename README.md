@@ -12,8 +12,7 @@ http://www.qt.io/qt-framework/
 Podofo makes it difficult to only copy the required resources/objects when splitting a pdf. I will be moving to hummus pdf.
 
 # Linux
-Please compile podofo and fix the lib path and header path in the .pro file. Run qmake and make or compile with QtCreator.
-Also check bin for compiled binaries/libraries on Ubuntu 13.04.
+Please compile podofo and fix the lib path and header path in the .pro file. Run qmake and make or compile with QtCreator. Also check the deployed folder for pre-built binaries.
 
 # Windows
 I could not get podofo to compile and function correctly on windows. Mingw compiled library does not pass all the given tests. Compiling on visual studio seems way too tedious.
