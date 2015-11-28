@@ -66,10 +66,11 @@ void MainWindow::on_splitBrowseDir_clicked(){
 	ui->splitDirEdit->setText(targetDir);
 }
 
-void MainWindow::warningMsgBox(QString q){
+void MainWindow::warningMsgBox(QString q,bool isWarning){
 	QMessageBox msgBox;
 	msgBox.setText(q);
-	msgBox.setIcon(QMessageBox::Warning);
+	if (isWarning)
+		msgBox.setIcon(QMessageBox::Warning);
 	msgBox.exec();
 }
 
@@ -95,9 +96,10 @@ void MainWindow::on_mergePush_clicked()
 	//merge the files, potential problem: source files got deleted at this point
 	int status=p.merge(fileNames,finalPath.toStdString());
 	std::cout<<status<<std::endl;
-	if (status){
+	if (status)
 		warningMsgBox(tr(p.getErrorMsg().c_str()));
-	}
+	else
+		warningMsgBox(tr("Files have been successfully merged"),false);
 }
 
 void MainWindow::on_splitPush_clicked(){
@@ -120,7 +122,8 @@ void MainWindow::on_splitPush_clicked(){
 	std::string baseFileName(fileInfo.baseName().toStdString());
 	int status=p.split(srcFileStr.toStdString(),destPathStr.toStdString(),baseFileName,ui->splitHalfCheckBox->isChecked());
 	std::cout<<status<<std::endl;
-	if (status){
+	if (status)
 		warningMsgBox(tr(p.getErrorMsg().c_str()));
-	}
+	else
+		warningMsgBox(tr("File have been splitted successfully"),false);
 }

@@ -1,88 +1,157 @@
 #include "pdfcore.h"
-#include <podofo/podofo.h>
 #include <sstream>
 #include <cmath>
 #include <iostream>
-
-using namespace PoDoFo;
+#include <PDFWriter.h>
+#include <PDFPage.h>
+#include <PDFWriter.h>
+#include <PDFPageInput.h>
 
 PDFCore::PDFCore(){
 	errorMsg="None";
 }
 
 int PDFCore::merge(std::vector<std::string> &files, std::string dest){
-	PdfMemDocument mergingFile;
-	try{
-		for (unsigned int i=0;i<files.size();i++){
-			PdfMemDocument input(files[i].c_str());
-			mergingFile.Append(input);
+	PDFWriter pdfWriter;
+
+	EStatusCode status;
+
+	status=pdfWriter.StartPDF(dest, ePDFVersion13);
+
+	if (status!=PDFHummus::eSuccess){
+		errorMsg="failed to start pdf "+dest;
+		return status;
+	}
+
+	for (unsigned int i=0;i<files.size();i++){
+		status=pdfWriter.AppendPDFPagesFromPDF(files[i], PDFPageRange()).first;
+		if (status!=PDFHummus::eSuccess){
+			errorMsg="failed to merge "+files[i]+"\n";
+			break;
 		}
-		mergingFile.Write(dest.c_str());
-		return 0;
 	}
-	catch(PdfError &e){
-		e.PrintErrorMsg();
-		errorMsg=PdfError::ErrorMessage(e.GetError());
-		return e.GetError();
-	}
+	status=pdfWriter.EndPDF();
+	errorMsg="";
+	if (status!=PDFHummus::eSuccess)
+		errorMsg+="failed to end pdf "+dest;
+
+	return status;
 }
 
 
-//copies all the resources, this needs to be fixed
 int PDFCore::split(std::string srcPath,std::string destDir,std::string baseFileName,bool split){
-	try{
-		PdfMemDocument srcFile(srcPath.c_str());
-		int count=srcFile.GetPageCount();
+	//https://github.com/galkahana/PDF-Writer/wiki/PDF-Parsing
+	EStatusCode status;
+	InputFile pdfFile;
+	PDFParser parser;
+	status=pdfFile.OpenFile(srcPath);
+	if (status!=PDFHummus::eSuccess){
+		errorMsg="failed to open pdf";
+		return status;
+	}
+	status=parser.StartPDFParsing(pdfFile.GetInputStream());
+	if (status!=PDFHummus::eSuccess){
+		errorMsg="failed to parse pdf";
+		return status;
+	}
 
-		//
-		//PdfParser parser(&vecObj,srcPath.c_str());
+	unsigned int long pageNum=parser.GetPagesCount();
+	if (!pageNum){
+		errorMsg="pdf is empty or failed to parse content";
+		return PDFHummus::eFailure;
+	}
+	errorMsg="";
 
-		std::cout<<srcPath<<std::endl;
-		std::cout<<destDir<<std::endl;
-		std::cout<<baseFileName<<std::endl;
-		std::cout<<count<<std::endl;
-		for (int i=0;i<count;i++){
-			std::string fullDest=destDir+'/'+baseFileName+"_"+intZeroPadding(i+1,count);
-			std::cout<<fullDest<<std::endl;
+	for (unsigned int long i=0;i<pageNum;i++){
+		std::string
+			fullDest=destDir+'/'+baseFileName+"_"+intZeroPadding(i+1,pageNum);
+		PDFPageInput pageInput(&parser,parser.ParsePage(i));
+		PDFRectangle mediaBox=pageInput.GetMediaBox();
 
-			if (split){
-				//if cut in half, set the media box to half
-				PdfRect rectLeft=srcFile.GetPage(i)->GetMediaBox();
-				rectLeft.SetWidth(rectLeft.GetWidth()/2);
-				PdfRect rectRight=srcFile.GetPage(i)->GetMediaBox();
-				rectRight.SetWidth(rectRight.GetWidth()/2);
-				rectRight.SetLeft(rectRight.GetWidth());
-				PdfObject rLeft;
-				rectLeft.ToVariant(rLeft);
-				PdfObject rRight;
-				rectRight.ToVariant(rRight);
-				PdfMemDocument fileA;
-				fileA.InsertPages(srcFile,i,1);
-				PdfPage *pageA=fileA.GetPage(0);
-				pageA->GetObject()->GetDictionary().AddKey(PdfName("MediaBox"),rLeft);
-				fileA.Write(std::string(fullDest+"_A.pdf").c_str());
-				PdfMemDocument fileB;
-				fileB.InsertPages(srcFile,i,1);
-				PdfPage *pageB=fileB.GetPage(0);
-				pageB->GetObject()->GetDictionary().AddKey(PdfName("MediaBox"),rRight);
-				fileB.Write(std::string(fullDest+"_B.pdf").c_str());
-			}
-			else{
-				PdfMemDocument newFile;
-				newFile.InsertPages(srcFile,i,1);
-				fullDest+=".pdf";
-				newFile.Write(fullDest.c_str());
+		if (split){
+			PDFPageRange singlePageRange;
+			singlePageRange.mType = PDFPageRange::eRangeTypeSpecific;
+			singlePageRange.mSpecificRanges.push_back(ULongAndULong(i,i));
+
+			PDFWriter pdfWriter1;
+			PDFPage* p1=new PDFPage();
+			status=pdfWriter1.StartPDF(fullDest+"_A.pdf", ePDFVersion13);
+
+			if (status!=PDFHummus::eSuccess){
+				goto error;
 			}
 
+			PDFRectangle leftRect=mediaBox;
+			leftRect.UpperRightX=leftRect.UpperRightX/2;
+			p1->SetMediaBox(leftRect);
+
+			status=pdfWriter1.MergePDFPagesToPage(p1,srcPath,singlePageRange);
+			if (status!=PDFHummus::eSuccess)
+				goto error;
+
+			status=pdfWriter1.WritePageAndRelease(p1);
+			if (status!=PDFHummus::eSuccess)
+				goto error;
+
+			status=pdfWriter1.EndPDF();
+			if (status!=PDFHummus::eSuccess)
+				goto error;
+
+
+			PDFWriter pdfWriter2;
+			PDFPage* p2=new PDFPage();
+
+			status=pdfWriter2.StartPDF(fullDest+"_B.pdf", ePDFVersion13);
+			if (status!=PDFHummus::eSuccess)
+				goto error;
+
+			PDFRectangle rightRect=mediaBox;
+			rightRect.LowerLeftX=rightRect.UpperRightX/2;
+			p2->SetMediaBox(rightRect);
+			status=pdfWriter2.MergePDFPagesToPage(p2,srcPath,singlePageRange);
+			if (status!=PDFHummus::eSuccess)
+				goto error;
+
+			status=pdfWriter2.WritePageAndRelease(p2);
+			if (status!=PDFHummus::eSuccess)
+				goto error;
+
+			status=pdfWriter2.EndPDF();
+			if (status!=PDFHummus::eSuccess)
+				goto error;
+		}
+
+		else{
+
+			PDFWriter pdfWriter;
+			PDFPage* page=new PDFPage();
+			status=pdfWriter.StartPDF(fullDest+".pdf", ePDFVersion13);
+			page->SetMediaBox(mediaBox);
+			PDFPageRange singlePageRange;
+
+			singlePageRange.mType = PDFPageRange::eRangeTypeSpecific;
+			singlePageRange.mSpecificRanges.push_back(ULongAndULong(i,i));
+
+			status=pdfWriter.MergePDFPagesToPage(page,srcPath,singlePageRange);
+			if (status!=PDFHummus::eSuccess)
+				goto error;
+
+			status=pdfWriter.WritePageAndRelease(page);
+			if (status!=PDFHummus::eSuccess)
+				goto error;
+
+			status=pdfWriter.EndPDF();
+			if (status!=PDFHummus::eSuccess)
+				goto error;
 
 		}
-		return 0;
+		continue;
+error:
+		errorMsg+="failed to split page "+intZeroPadding(i+1,pageNum)+"\n";
+
 	}
-	catch(PdfError &e){
-		e.PrintErrorMsg();
-		errorMsg=PdfError::ErrorMessage(e.GetError());
-		return e.GetError();
-	}
+
+	return status;
 }
 
 //int to string then add zeroes to match the length of c

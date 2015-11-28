@@ -39,7 +39,7 @@ private slots:
 private:
 	Ui::MainWindow *ui;
 	PDFCore p;
-	void warningMsgBox(QString);
+	void warningMsgBox(QString, bool isWarning=true);
 };
 
 #endif // MAINWINDOW_H
