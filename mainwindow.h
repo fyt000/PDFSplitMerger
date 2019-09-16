@@ -1,8 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "pdfcore.h"
+
 #include <QMainWindow>
-#include <pdfcore.h>
+
+#include <memory>
 
 namespace Ui {
 class MainWindow;
@@ -14,11 +17,10 @@ class MainWindow : public QMainWindow
 
 public:
 	explicit MainWindow(QWidget *parent = 0);
-	~MainWindow();
+        ~MainWindow();
 
-private slots:
-	void on_mergeBrowse_clicked();
-
+    private slots:
+        void on_mergeBrowse_clicked();
 
 	void on_mergeAddFile_clicked();
 
@@ -26,20 +28,19 @@ private slots:
 
 	void on_mergeMoveUp_clicked();
 
-	void on_mergeMoveDown_clicked();
+        void on_mergeMoveDown_clicked();
 
-	void on_splitBrowseFile_clicked();
+        void on_splitBrowseFile_clicked();
 
-	void on_splitBrowseDir_clicked();
+        void on_splitBrowseDir_clicked();
 
-	void on_mergePush_clicked();
+        void on_mergePush_clicked();
 
-	void on_splitPush_clicked();
+        void on_splitPush_clicked();
 
-private:
-	Ui::MainWindow *ui;
-	PDFCore p;
-	void warningMsgBox(QString, bool isWarning=true);
+    private:
+        Ui::MainWindow *ui;
+        void warningMsgBox(const QString &, bool isWarning = true);
 };
 
 #endif // MAINWINDOW_H

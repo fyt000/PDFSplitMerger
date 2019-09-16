@@ -1,0 +1,10 @@
+---
+AccessModifierOffset: '-4'
+AlignTrailingComments: 'true'
+AlwaysBreakTemplateDeclarations: 'true'
+BreakConstructorInitializers: AfterColon
+ColumnLimit: '100'
+Cpp11BracedListStyle: 'true'
+IndentWidth: '4'
+SpaceAfterTemplateKeyword: 'false'
+...
